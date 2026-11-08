@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ThreatLens AI | Cyber Threat Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #020617;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: #020617;
+      border-bottom: 1px solid #1e293b;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .brand {
+      color: #38bdf8;
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .brand span {
+      display: block;
+      color: #94a3b8;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+
+    .user-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #cbd5e1;
+    }
+
+    button {
+      padding: 11px 17px;
+      background: #2563eb;
+      border: 0;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .logout-btn {
+      background: #dc2626;
+    }
+
+    .container {
+      width: 97%;
+      max-width: 1750px;
+      margin: 20px auto;
+    }
+
+    .hero,
+    .panel {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 15px;
+      padding: 22px;
+      margin-bottom: 20px;
+      min-width: 0;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #0f172a, #0b1930);
+      padding: 28px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      margin-bottom: 10px;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 17px;
+      color: #86efac;
+      font-size: 13px;
+    }
+
+    .status-dot {
+      height: 9px;
+      width: 9px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    .upload-box {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 22px;
+    }
+
+    input[type="file"] {
+      padding: 10px;
+      background: #020617;
+      border: 1px solid #334155;
+      color: white;
+      border-radius: 8px;
+      max-width: 100%;
+    }
+
+    .summary {
+      display: none;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .card {
+      position: relative;
+      background: #0f172a;
+      border: 1px solid #263449;
+      border-radius: 14px;
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 3px;
+      background: #38bdf8;
+    }
+
+    .card.red::before {
+      background: #ef4444;
+    }
+
+    .card.orange::before {
+      background: #f59e0b;
+    }
+
+    .card.green::before {
+      background: #22c55e;
+    }
+
+    .card h3 {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 13px;
+    }
+
+    .card p {
+      font-size: 32px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    .card small {
+      display: block;
+      margin-top: 8px;
+      color: #64748b;
+    }
+
+    .section-title {
+      font-size: 21px;
+      color: #38bdf8;
+      margin-bottom: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .toolbar input,
+    .toolbar select {
+      background: #020617;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      min-width: 170px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .toolbar input {
+      flex: 1;
+    }
+
+    .toolbar input:focus,
+    .toolbar select:focus {
+      border-color: #38bdf8;
+    }
+
+    .export-btn {
+      background: #0891b2;
+    }
+
+    .results-meta {
+      color: #94a3b8;
+      font-size: 13px;
+      margin: 8px 0 14px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #020617;
+      min-width: 1000px;
+    }
+
+    th,
+    td {
+      padding: 13px 10px;
+      border: 1px solid #1e293b;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th {
+      background: linear-gradient(90deg, #1d4ed8, #1e40af);
+      color: white;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #0f172a;
+    }
+
+    tbody tr:hover {
+      background: #172554;
+    }
+
+    .severity-high,
+    .severity-medium,
+    .severity-low,
+    .severity-critical {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .severity-high {
+      color: #fecaca;
+      background: #7f1d1d;
+    }
+
+    .severity-medium {
+      color: #fde68a;
+      background: #78350f;
+    }
+
+    .severity-low {
+      color: #bae6fd;
+      background: #0c4a6e;
+    }
+
+    .severity-critical {
+      color: white;
+      background: #be123c;
+    }
+
+    .map-btn {
+      background: #15803d;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: white;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 12px;
+    }
+
+    #map {
+      height: 400px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      overflow: hidden;
+    }
+
+    .chart-box {
+      background: #020617;
+      border: 1px solid #263449;
+      border-radius: 10px;
+      padding: 18px;
+      min-height: 260px;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding: 0 0 22px 27px;
+      border-left: 2px solid #334155;
+      margin-left: 8px;
+    }
+
+    .timeline-item:last-child {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 10px #38bdf866;
+    }
+
+    .timeline-item.critical::before {
+      background: #f43f5e;
+    }
+
+    .timeline-item.high::before {
+      background: #f97316;
+    }
+
+    .timeline-item.medium::before {
+      background: #facc15;
+    }
+
+    .timeline-item strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .timeline-item small {
+      color: #94a3b8;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .analyst-box {
+      background: #020617;
+      border: 1px solid #263449;
+      padding: 18px;
+      border-radius: 10px;
+    }
+
+    .analyst-box h3 {
+      color: #67e8f9;
+      margin-bottom: 12px;
+    }
+
+    .analyst-box p {
+      color: #cbd5e1;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .recommendation {
+      margin-top: 14px;
+      padding: 12px;
+      background: #172554;
+      border-left: 3px solid #38bdf8;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .travel-alert {
+      background: #2a111b;
+      border-left-color: #fb7185;
+    }
+
+    .travel-ok {
+      background: #10251e;
+      border-left-color: #22c55e;
+    }
+
+    .error {
+      color: #fca5a5;
+      text-align: center;
+      font-weight: 600;
+      margin: 12px 0;
+      line-height: 1.5;
+    }
+
+    .small-note {
+      text-align: center;
+      color: #64748b;
+      margin-top: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: #020617eb;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .loader-box {
+      text-align: center;
+      color: #93c5fd;
+      font-size: 18px;
+    }
+
+    .spinner {
+      width: 55px;
+      height: 55px;
+      border: 5px solid #1e293b;
+      border-top: 5px solid #38bdf8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 1050px) {
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topbar {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .container {
+        width: 94%;
+      }
+
+      .hero,
+      .panel {
+        padding: 15px;
+      }
+
+      .summary {
+        gap: 10px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .card p {
+        font-size: 25px;
+      }
+
+      .toolbar {
+        flex-direction: column;
+      }
+
+      .toolbar input,
+      .toolbar select,
+      .toolbar button,
+      .upload-box input,
+      .upload-box button {
+        width: 100%;
+      }
+
+      #map {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      🛡 ThreatLens AI
+      <span>CYBER THREAT INVESTIGATION PLATFORM</span>
+    </div>
+
+    <div class="user-box">
+      <span>Welcome, <strong id="user">User</strong></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1 id="mainTitle">Cyber Threat Analyzer</h1>
+
+      <p class="subtitle">
+        Detect suspicious activity, investigate threats, analyze risk,
+        and visualize approximate IP locations.
+      </p>
+
+      <div class="status-line">
+        <span class="status-dot"></span>
+        Dashboard ready · Upload a log file to begin analysis
+      </div>
+
+      <div class="upload-box">
+        <input type="file" id="fileInput" accept=".txt,.log">
+        <button id="analyzeBtn" onclick="analyze()">Analyze Log File</button>
+      </div>
+    </section>
+
+    <section class="summary" id="summary">
+      <div class="card">
+        <h3>📄 Total Logs</h3>
+        <p id="total">0</p>
+        <small>Events processed</small>
+      </div>
+
+      <div class="card red">
+        <h3>🚨 Total Alerts</h3>
+        <p id="alerts">0</p>
+        <small>Suspicious events identified</small>
+      </div>
+
+      <div class="card orange">
+        <h3>🔴 Critical Alerts</h3>
+        <p id="criticalCount">0</p>
+        <small>Highest severity events</small>
+      </div>
+
+      <div class="card green">
+        <h3>🛡 Security Status</h3>
+        <p id="securityStatus" style="font-size:24px">READY</p>
+        <small id="securityStatusNote">Awaiting analysis</small>
+      </div>
+    </section>
+
+    <div id="errorBox" class="error" role="alert"></div>
+
+    <section class="panel">
+      <h2 class="section-title">🔎 Threat Investigation</h2>
+
+      <div class="toolbar">
+        <input
+          type="search"
+          id="searchThreat"
+          placeholder="Search username, IP, event, or threat..."
+          aria-label="Search threats"
+        >
+
+        <select id="severityFilter" aria-label="Filter by severity">
+          <option value="ALL">All Severities</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+
+        <button class="export-btn" id="exportBtn" type="button">
+          Export CSV Report
+        </button>
+      </div>
+
+      <div class="results-meta" id="resultsMeta">
+        Analyze a log file to view alerts.
+      </div>
+
+      <div class="table-wrap">
+        <table id="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>User</th>
+              <th>IP Address</th>
+              <th>Event</th>
+              <th>Threat Type</th>
+              <th>Severity</th>
+              <th>Risk Score</th>
+              <th>Message</th>
+              <th>Location</th>
+              <th>Map</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="two-column">
+      <section class="panel">
+        <h2 class="section-title">🌍 Live Attack Map</h2>
+        <div id="map"></div>
+
+        <p class="small-note">
+          IP geolocation is approximate. Private/local IP addresses cannot
+          be mapped to a public geographic location.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2 class="section-title">📊 Security Analytics</h2>
+        <div class="chart-box">
+          <canvas id="chart"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <div class="two-column">
+      <section class="panel">
+        <h2 class="section-title">🕒 Incident Timeline</h2>
+
+        <div class="timeline" id="timeline">
+          <div class="timeline-item">
+            <strong>Waiting for log analysis</strong>
+            <small>Upload a log file to reconstruct the alert timeline.</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="section-title">🤖 Security Analyst</h2>
+
+        <div class="analyst-box">
+          <h3 id="analystHeading">Investigation Summary</h3>
+
+          <p id="analystSummary">
+            The analyst will summarize detected alerts after a log file is analyzed.
+          </p>
+
+          <div class="recommendation" id="recommendation">
+            Recommended action: Upload and analyze a log file to receive
+            rule-based security guidance.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2 class="section-title">✈️ Impossible Travel Detection</h2>
+
+      <p class="subtitle" style="text-align:left;margin-bottom:14px">
+        Checks successful-login alerts for the same username from distant
+        public IP locations within a short time window. This is a heuristic,
+        not proof of account compromise.
+      </p>
+
+      <div id="travelResults" class="analyst-box">
+        <p>Analyze a log file to check for unusual travel patterns.</p>
+      </div>
+    </section>
+
+    <p class="small-note">
+      ThreatLens AI is a log-analysis prototype. Risk ratings and recommendations
+      should be verified. Use only synthetic or authorized logs.
+    </p>
+  </main>
+
+  <div id="loader">
+    <div class="loader-box">
+      <div class="spinner"></div>
+      <p>Analyzing security logs...</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("user").textContent =
+      localStorage.getItem("securelog_current_user") || "User";
+
+    function logout() {
+      localStorage.removeItem("securelog_current_user");
+      window.location.href = "/login";
+    }
+
+    function playAlert() {
+      try {
+        const audio = new Audio(
+          "https://www.soundjay.com/button/beep-07.wav"
+        );
+
+        audio.play().catch(() => {});
+      } catch (error) {
+        console.warn("Alert sound unavailable");
+      }
+    }
+
+    function flashAlert() {
+      document.body.style.boxShadow =
+        "inset 0 0 0 9999px rgba(255,0,0,.12)";
+
+      setTimeout(() => {
+        document.body.style.boxShadow = "none";
+      }, 250);
+    }
+
+    function severityHtml(severity) {
+      const value = String(severity || "LOW").toUpperCase();
+
+      if (value === "CRITICAL") {
+        return '<span class="severity-critical">CRITICAL</span>';
+      }
+
+      if (value === "HIGH") {
+        return '<span class="severity-high">HIGH</span>';
+      }
+
+      if (value === "MEDIUM") {
+        return '<span class="severity-medium">MEDIUM</span>';
+      }
+
+      return '<span class="severity-low">LOW</span>';
+    }
+
+    function isPrivate(ip) {
+      return !ip ||
+        ip.startsWith("192.168.") ||
+        ip.startsWith("10.") ||
+        ip === "127.0.0.1" ||
+        ip === "localhost" ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip);
+    }
+
+    async function getLocation(ip) {
+      if (isPrivate(ip)) {
+        return {
+          text: "Private / Local Network",
+          map: "",
+          lat: null,
+          lon: null
+        };
+      }
+
+      try {
+        const response = await fetch(
+          "http://ip-api.com/json/" + encodeURIComponent(ip)
+        );
+
+        if (!response.ok) {
+          throw new Error("Location lookup failed");
+        }
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+          return {
+            text: `${data.city || "Unknown"}, ${data.regionName || ""}, ${data.country || ""}`,
+            map: `https://www.google.com/maps?q=${data.lat},${data.lon}`,
+            lat: Number(data.lat),
+            lon: Number(data.lon)
+          };
+        }
+      } catch (error) {
+        console.warn("Location lookup unavailable:", error);
+      }
+
+      return {
+        text: "Unknown",
+        map: "",
+        lat: null,
+        lon: null
+      };
+    }
+
+    const map = L.map("map").setView([20, 78], 2);
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 18,
+        attribution: "&copy; OpenStreetMap contributors"
+      }
+    ).addTo(map);
+
+    const markersLayer = L.layerGroup().addTo(map);
+    let chartInstance = null;
+
+    function addAttackMarker(lat, lon, label) {
+      L.circleMarker([lat, lon], {
+        radius: 8,
+        color: "#ef4444",
+        fillColor: "#f43f5e",
+        fillOpacity: 0.75,
+        weight: 2
+      })
+        .addTo(markersLayer)
+        .bindPopup(label);
+    }
+
+    function drawChart(totalLogs, totalAlerts, criticalAlerts) {
+      const context = document.getElementById("chart").getContext("2d");
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(context, {
+        type: "bar",
+
+        data: {
+          labels: [
+            "Total Logs",
+            "Total Alerts",
+            "Critical Alerts"
+          ],
+
+          datasets: [{
+            label: "Security Analysis",
+            data: [totalLogs, totalAlerts, criticalAlerts],
+
+            backgroundColor: [
+              "rgba(56,189,248,.75)",
+              "rgba(249,115,22,.75)",
+              "rgba(244,63,94,.75)"
+            ],
+
+            borderColor: [
+              "#38bdf8",
+              "#f97316",
+              "#f43f5e"
+            ],
+
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+
+        options: {
+          responsive: true,
+
+          plugins: {
+            legend: {
+              labels: {
+                color: "#e2e8f0"
+              }
+            }
+          },
+
+          scales: {
+            x: {
+              ticks: {
+                color: "#cbd5e1"
+              },
+
+              grid: {
+                color: "rgba(148,163,184,.08)"
+              }
+            },
+
+            y: {
+              beginAtZero: true,
+
+              ticks: {
+                color: "#cbd5e1",
+                precision: 0
+              },
+
+              grid: {
+                color: "rgba(148,163,184,.12)"
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateTimeline(alerts) {
+      const timeline = document.getElementById("timeline");
+      timeline.replaceChildren();
+
+      if (!alerts.length) {
+        const item = document.createElement("div");
+        item.className = "timeline-item";
+
+        const title = document.createElement("strong");
+        title.textContent = "No suspicious events found";
+
+        const detail = document.createElement("small");
+        detail.textContent =
+          "No alerts were returned by the current detection rules.";
+
+        item.append(title, detail);
+        timeline.appendChild(item);
+        return;
+      }
+
+      [...alerts].slice(0, 12).forEach(alert => {
+        const severity =
+          String(alert.severity || "LOW").toLowerCase();
+
+        const item = document.createElement("div");
+        item.className = "timeline-item " + severity;
+
+        const title = document.createElement("strong");
+        title.textContent =
+          `${alert.time || "Time unknown"} · ${alert.threatType || alert.eventType || "Security Alert"}`;
+
+        const detail = document.createElement("small");
+        detail.textContent =
+          `${alert.date || ""} | User: ${alert.username || "Unknown"} | IP: ${alert.ipAddress || "Unknown"} | Severity: ${String(alert.severity || "LOW").toUpperCase()}`;
+
+        item.append(title, detail);
+        timeline.appendChild(item);
+      });
+    }
+
+    function updateAnalyst(alerts) {
+      const summary = document.getElementById("analystSummary");
+      const recommendation = document.getElementById("recommendation");
+      const heading = document.getElementById("analystHeading");
+
+      if (!alerts.length) {
+        heading.textContent = "No Alerts Detected";
+
+        summary.textContent =
+          "No suspicious events were returned by the current detection rules. This does not guarantee the system is completely safe.";
+
+        recommendation.textContent =
+          "Recommended action: Continue monitoring and review log coverage.";
+
+        return;
+      }
+
+      const critical = alerts.filter(
+        alert => String(alert.severity).toUpperCase() === "CRITICAL"
+      ).length;
+
+      const high = alerts.filter(
+        alert => String(alert.severity).toUpperCase() === "HIGH"
+      ).length;
+
+      const top = alerts.reduce(
+        (best, alert) =>
+          Number(alert.riskScore || 0) > Number(best.riskScore || 0)
+            ? alert
+            : best,
+        alerts[0]
+      );
+
+      heading.textContent = critical
+        ? "Critical Incident Review"
+        : high
+          ? "High-Risk Incident Review"
+          : "Incident Review";
+
+      summary.textContent =
+        `${alerts.length} alert(s) detected: ${critical} critical and ${high} high-severity. Highest reported risk score: ${Number(top.riskScore || 0)} for ${top.threatType || top.eventType || "a suspicious event"}.`;
+
+      recommendation.textContent =
+        "Recommended action: Verify whether the activity is authorized, review related login history, and follow your incident response procedure. This is a rule-based summary, not an independent AI diagnosis.";
+    }
+
+    function parseEventDate(alert) {
+      const raw =
+        `${alert.date || ""}T${alert.time || "00:00:00"}`;
+
+      const date = new Date(raw);
+
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function distanceKm(lat1, lon1, lat2, lon2) {
+      const radians = value => value * Math.PI / 180;
+
+      const dLat = radians(lat2 - lat1);
+      const dLon = radians(lon2 - lon1);
+
+      const value =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(radians(lat1)) *
+        Math.cos(radians(lat2)) *
+        Math.sin(dLon / 2) ** 2;
+
+      return 6371 * 2 * Math.atan2(
+        Math.sqrt(value),
+        Math.sqrt(1 - value)
+      );
+    }
+
+    async function detectImpossibleTravel(alerts, locationsByAlert) {
+      const box = document.getElementById("travelResults");
+      box.replaceChildren();
+
+      const logins = alerts.filter(
+        alert =>
+          String(alert.eventType || "").toUpperCase() === "LOGIN_SUCCESS"
+      );
+
+      if (logins.length < 2) {
+        const message = document.createElement("p");
+
+        message.textContent =
+          "Not enough successful-login alerts to compare locations. The current backend returns suspicious alerts only, so normal successful logins may not appear here.";
+
+        box.appendChild(message);
+        return;
+      }
+
+      const groups = {};
+
+      logins.forEach(alert => {
+        const username = alert.username || "Unknown";
+
+        if (!groups[username]) {
+          groups[username] = [];
+        }
+
+        groups[username].push(alert);
+      });
+
+      let count = 0;
+
+      for (const [username, entries] of Object.entries(groups)) {
+        const valid = [];
+
+        for (const alert of entries) {
+          const date = parseEventDate(alert);
+
+          let location = locationsByAlert.get(alert);
+
+          if (!location) {
+            location = await getLocation(alert.ipAddress);
+          }
+
+          if (
+            date &&
+            location.lat !== null &&
+            location.lon !== null
+          ) {
+            valid.push({
+              alert,
+              date,
+              location
+            });
+          }
+        }
+
+        valid.sort((a, b) => a.date - b.date);
+
+        for (let i = 1; i < valid.length; i++) {
+          const previous = valid[i - 1];
+          const current = valid[i];
+
+          const minutes =
+            (current.date - previous.date) / 60000;
+
+          const distance = distanceKm(
+            previous.location.lat,
+            previous.location.lon,
+            current.location.lat,
+            current.location.lon
+          );
+
+          if (minutes > 0 && minutes <= 60 && distance >= 500) {
+            const card = document.createElement("div");
+            card.className = "recommendation travel-alert";
+            card.style.marginBottom = "12px";
+
+            const title = document.createElement("strong");
+            title.textContent =
+              "⚠️ Possible Impossible Travel Pattern";
+
+            const detail = document.createElement("p");
+            detail.style.marginTop = "8px";
+
+            detail.textContent =
+              `User: ${username} · ${previous.location.text} → ${current.location.text} · Approx. ${Math.round(distance)} km in ${Math.round(minutes)} minute(s). Verify this activity; IP geolocation and timestamps may be inaccurate.`;
+
+            card.append(title, detail);
+            box.appendChild(card);
+
+            count++;
+          }
+        }
+      }
+
+      if (!count) {
+        const message = document.createElement("p");
+
+        message.textContent =
+          "No impossible-travel pattern was detected among the available successful-login alerts with usable public-IP locations. This does not mean every login is safe.";
+
+        box.appendChild(message);
+      }
+    }
+
+    async function analyze() {
+      const file = document.getElementById("fileInput").files[0];
+      const errorBox = document.getElementById("errorBox");
+      const analyzeButton = document.getElementById("analyzeBtn");
+
+      errorBox.textContent = "";
+      document.querySelector("#table tbody").innerHTML = "";
+      markersLayer.clearLayers();
+
+      if (!file) {
+        errorBox.textContent = "Please select a log file first.";
+        return;
+      }
+
+      document.getElementById("loader").style.display = "flex";
+      analyzeButton.disabled = true;
+
+      try {
+        const form = new FormData();
+        form.append("logFile", file);
+
+        const response = await fetch("/analyze", {
+          method: "POST",
+          body: form
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const alerts = Array.isArray(data.alerts) ? data.alerts : [];
+        const loginEvents = Array.isArray(data.loginEvents)
+          ? data.loginEvents
+          : [];
+
+        document.getElementById("summary").style.display = "grid";
+        document.getElementById("table").style.display = "table";
+
+        document.getElementById("total").textContent =
+          data.totalLogs || 0;
+
+        document.getElementById("alerts").textContent =
+          data.totalAlerts ?? alerts.length;
+
+        const critical = alerts.filter(
+          alert =>
+            String(alert.severity || "").toUpperCase() === "CRITICAL"
+        ).length;
+
+        document.getElementById("criticalCount").textContent = critical;
+
+        const status = document.getElementById("securityStatus");
+        const note = document.getElementById("securityStatusNote");
+
+        if (critical) {
+          status.textContent = "CRITICAL";
+          status.style.color = "#fb7185";
+          note.textContent = "Immediate review recommended";
+        } else if (alerts.length) {
+          status.textContent = "REVIEW";
+          status.style.color = "#fbbf24";
+          note.textContent = "Suspicious activity detected";
+        } else {
+          status.textContent = "LOW RISK";
+          status.style.color = "#86efac";
+          note.textContent = "No alerts returned by current rules";
+        }
+
+        drawChart(
+          data.totalLogs || 0,
+          data.totalAlerts ?? alerts.length,
+          critical
+        );
+
+        updateTimeline(alerts);
+        updateAnalyst(alerts);
+
+        if (alerts.length) {
+          playAlert();
+          flashAlert();
+        }
+
+        const tbody = document.querySelector("#table tbody");
+        const locationsByAlert = new Map();
+
+        for (const alert of alerts) {
+          const ip = String(alert.ipAddress || "");
+          const location = await getLocation(ip);
+
+          locationsByAlert.set(alert, location);
+
+          const row = document.createElement("tr");
+
+          row.dataset.severity =
+            String(alert.severity || "LOW").toUpperCase();
+
+          const values = [
+            alert.date || "",
+            alert.time || "",
+            alert.username || "",
+            ip,
+            alert.eventType || "",
+            alert.threatType || "",
+            null,
+            alert.riskScore ?? 0,
+            alert.message || "",
+            location.text || "Unknown",
+            null
+          ];
+
+          values.forEach((value, index) => {
+            const cell = document.createElement("td");
+
+            if (index === 6) {
+              cell.innerHTML = severityHtml(alert.severity);
+            } else if (index === 10 && location.map) {
+              const link = document.createElement("a");
+
+              link.className = "map-btn";
+              link.href = location.map;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = "View Map";
+
+              cell.appendChild(link);
+            } else if (index === 10) {
+              cell.textContent = "-";
+            } else {
+              cell.textContent = String(value ?? "");
+            }
+
+            row.appendChild(cell);
+          });
+
+          tbody.appendChild(row);
+
+          if (location.lat !== null && location.lon !== null) {
+            addAttackMarker(
+              location.lat,
+              location.lon,
+              `${ip} - ${alert.threatType || alert.eventType || "Alert"}`
+            );
+          }
+        }
+
+        filterThreats();
+        await detectImpossibleTravel(loginEvents, new Map());
+
+      } catch (error) {
+        console.error(error);
+
+        errorBox.textContent =
+          "Analysis failed. Check that your server is running and the /analyze endpoint is available.";
+
+      } finally {
+        document.getElementById("loader").style.display = "none";
+        analyzeButton.disabled = false;
+      }
+    }
+
+    function filterThreats() {
+      const query = document.getElementById("searchThreat")
+        .value.trim().toLowerCase();
+
+      const selected =
+        document.getElementById("severityFilter").value;
+
+      const rows = [
+        ...document.querySelectorAll("#table tbody tr")
+      ];
+
+      let visible = 0;
+
+      rows.forEach(row => {
+        const matchesSearch =
+          row.innerText.toLowerCase().includes(query);
+
+        const matchesSeverity =
+          selected === "ALL" ||
+          (row.dataset.severity || "LOW") === selected;
+
+        const matches = matchesSearch && matchesSeverity;
+
+        row.style.display = matches ? "" : "none";
+
+        if (matches) {
+          visible++;
+        }
+      });
+
+      document.getElementById("resultsMeta").textContent =
+        rows.length
+          ? `Showing ${visible} of ${rows.length} alerts` +
+            (selected !== "ALL" ? ` · Severity: ${selected}` : "") +
+            (query ? ` · Search: "${query}"` : "")
+          : "Analyze a log file to view alerts.";
+    }
+
+    document.getElementById("searchThreat")
+      .addEventListener("input", filterThreats);
+
+    document.getElementById("severityFilter")
+      .addEventListener("change", filterThreats);
+
+    document.getElementById("exportBtn")
+      .addEventListener("click", () => {
+        const rows = [
+          ...document.querySelectorAll("#table tr")
+        ];
+
+        if (rows.length <= 1) {
+          document.getElementById("errorBox").textContent =
+            "Analyze a log file before exporting a report.";
+          return;
+        }
+
+        const visibleRows = rows.filter(
+          (row, index) =>
+            index === 0 || row.style.display !== "none"
+        );
+
+        const csv = visibleRows.map(row =>
+          [...row.querySelectorAll("th, td")]
+            .map(cell => {
+              const value = cell.innerText
+                .replace(/\s+/g, " ")
+                .trim()
+                .replace(/"/g, '""');
+
+              return `"${value}"`;
+            })
+            .join(",")
+        ).join("\r\n");
+
+        const blob = new Blob(["\uFEFF" + csv], {
+          type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "ThreatLens_Incident_Report.csv";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+  </script>
+</body>
+</html>

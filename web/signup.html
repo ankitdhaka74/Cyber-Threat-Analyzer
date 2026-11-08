@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Account - SecureLog</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(37,99,235,0.2), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(22,163,74,0.18), transparent 25%),
+        linear-gradient(135deg, #030712, #0b1120 55%, #111827);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .signup-wrapper {
+      width: 100%;
+      max-width: 1120px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      padding: 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .side-panel, .signup-card {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(148,163,184,0.14);
+      border-radius: 24px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    .side-panel {
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .side-title {
+      font-size: 38px;
+      color: #f8fafc;
+      margin: 0 0 16px 0;
+      line-height: 1.15;
+    }
+
+    .side-text {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .check-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .check-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(148,163,184,0.1);
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .signup-card {
+      padding: 34px 30px;
+    }
+
+    .signup-title {
+      text-align: center;
+      font-size: 30px;
+      margin: 0 0 8px 0;
+      color: #f8fafc;
+    }
+
+    .signup-subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 28px;
+      font-size: 15px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .input-box {
+      position: relative;
+    }
+
+    .input-box input {
+      width: 100%;
+      padding: 14px 44px 14px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,0.2);
+      background: rgba(2,6,23,0.65);
+      color: #f8fafc;
+      outline: none;
+      font-size: 15px;
+      transition: 0.25s;
+    }
+
+    .input-box input:focus {
+      border-color: rgba(59,130,246,0.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.14);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .strength-box {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .strength-bar {
+      height: 8px;
+      background: rgba(148,163,184,0.15);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      background: #ef4444;
+      transition: 0.25s;
+    }
+
+    .signup-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #16a34a, #15803d);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(22,163,74,0.28);
+      transition: 0.25s ease;
+      margin-top: 8px;
+    }
+
+    .signup-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(22,163,74,0.34);
+    }
+
+    .bottom-text {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .bottom-text a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .bottom-text a:hover {
+      text-decoration: underline;
+    }
+
+    .error-box, .success-box {
+      display: none;
+      margin-top: 14px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .error-box {
+      background: rgba(127,29,29,0.45);
+      border: 1px solid rgba(248,113,113,0.28);
+      color: #fecaca;
+    }
+
+    .success-box {
+      background: rgba(20,83,45,0.45);
+      border: 1px solid rgba(74,222,128,0.28);
+      color: #bbf7d0;
+    }
+
+    @media (max-width: 900px) {
+      .signup-wrapper {
+        grid-template-columns: 1fr;
+      }
+
+      .side-title {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="signup-wrapper">
+    <div class="side-panel">
+      <h1 class="side-title">Create Your SecureLog Account</h1>
+      <div class="side-text">
+        Sign up to access the dark theme cyber security dashboard, upload system logs, and monitor suspicious IP activity with live threat alerts and map integration.
+      </div>
+
+      <div class="check-list">
+        <div class="check-item">✅ Access the full cyber threat monitoring dashboard</div>
+        <div class="check-item">✅ Upload and analyze suspicious login logs</div>
+        <div class="check-item">✅ Detect brute force attempts and risky actions</div>
+        <div class="check-item">✅ View approximate IP location and open map instantly</div>
+      </div>
+    </div>
+
+    <div class="signup-card">
+      <h2 class="signup-title">Create Account</h2>
+      <div class="signup-subtitle">Register to continue to the SecureLog dashboard</div>
+
+      <div class="input-group">
+        <label class="input-label">Username</label>
+        <div class="input-box">
+          <input type="text" id="signUser" placeholder="Choose a username">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <div class="input-box">
+          <input type="password" id="signPass" placeholder="Create a password" oninput="checkStrength()">
+          <span class="toggle-password" onclick="togglePassword('signPass', this)">Show</span>
+        </div>
+        <div class="strength-box">
+          Password Strength: <span id="strengthText">Weak</span>
+          <div class="strength-bar">
+            <div class="strength-fill" id="strengthFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Confirm Password</label>
+        <div class="input-box">
+          <input type="password" id="confirmPass" placeholder="Re-enter password">
+          <span class="toggle-password" onclick="togglePassword('confirmPass', this)">Show</span>
+        </div>
+      </div>
+
+      <button class="signup-btn" onclick="signup()">Create Account</button>
+
+      <div id="errorBox" class="error-box"></div>
+      <div id="successBox" class="success-box"></div>
+
+      <div class="bottom-text">
+        Already have an account? <a href="/login">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword(inputId, element) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        element.textContent = "Hide";
+      } else {
+        input.type = "password";
+        element.textContent = "Show";
+      }
+    }
+
+    function checkStrength() {
+      const password = document.getElementById("signPass").value;
+      const strengthText = document.getElementById("strengthText");
+      const strengthFill = document.getElementById("strengthFill");
+
+      let score = 0;
+
+      if (password.length >= 6) score++;
+      if (/[A-Z]/.test(password)) score++;
+      if (/[0-9]/.test(password)) score++;
+      if (/[^A-Za-z0-9]/.test(password)) score++;
+
+      if (score <= 1) {
+        strengthText.textContent = "Weak";
+        strengthFill.style.width = "25%";
+        strengthFill.style.background = "#ef4444";
+      } else if (score === 2) {
+        strengthText.textContent = "Medium";
+        strengthFill.style.width = "55%";
+        strengthFill.style.background = "#f59e0b";
+      } else if (score === 3) {
+        strengthText.textContent = "Strong";
+        strengthFill.style.width = "80%";
+        strengthFill.style.background = "#22c55e";
+      } else {
+        strengthText.textContent = "Very Strong";
+        strengthFill.style.width = "100%";
+        strengthFill.style.background = "#16a34a";
+      }
+    }
+
+    function signup() {
+      const username = document.getElementById("signUser").value.trim();
+      const password = document.getElementById("signPass").value.trim();
+      const confirmPassword = document.getElementById("confirmPass").value.trim();
+      const errorBox = document.getElementById("errorBox");
+      const successBox = document.getElementById("successBox");
+
+      errorBox.style.display = "none";
+      successBox.style.display = "none";
+      errorBox.textContent = "";
+      successBox.textContent = "";
+
+      if (!username || !password || !confirmPassword) {
+        errorBox.textContent = "Please fill all fields.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      if (password.length < 6) {
+        errorBox.textContent = "Password must be at least 6 characters long.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorBox.textContent = "Password and confirm password do not match.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      const users = JSON.parse(localStorage.getItem("securelog_users") || "[]");
+      const exists = users.some(u => u.username === username);
+
+      if (exists) {
+        errorBox.textContent = "Username already exists.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      users.push({ username, password });
+      localStorage.setItem("securelog_users", JSON.stringify(users));
+
+      successBox.textContent = "Account created successfully. Redirecting to login...";
+      successBox.style.display = "block";
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SecureLog Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37,99,235,0.22), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(220,38,38,0.15), transparent 25%),
+        linear-gradient(135deg, #030712, #0b1120 50%, #111827);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      padding: 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .info-panel, .login-card {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(148,163,184,0.14);
+      border-radius: 24px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    .info-panel {
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #93c5fd;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 18px;
+    }
+
+    .brand-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(37,99,235,0.35);
+    }
+
+    .hero-title {
+      font-size: 42px;
+      line-height: 1.15;
+      margin: 10px 0 14px;
+      color: #f8fafc;
+    }
+
+    .hero-subtitle {
+      color: #94a3b8;
+      font-size: 17px;
+      line-height: 1.7;
+      max-width: 90%;
+      margin-bottom: 26px;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .feature-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(148,163,184,0.1);
+      padding: 14px 16px;
+      border-radius: 14px;
+    }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(37,99,235,0.15);
+      color: #93c5fd;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+
+    .feature-text {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .login-card {
+      padding: 34px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-title {
+      font-size: 30px;
+      margin: 0 0 8px 0;
+      color: #f8fafc;
+      text-align: center;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 28px;
+      font-size: 15px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .input-box {
+      position: relative;
+    }
+
+    .input-box input {
+      width: 100%;
+      padding: 14px 44px 14px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,0.2);
+      background: rgba(2,6,23,0.65);
+      color: #f8fafc;
+      outline: none;
+      font-size: 15px;
+      transition: 0.25s;
+    }
+
+    .input-box input:focus {
+      border-color: rgba(59,130,246,0.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.14);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 18px;
+      flex-wrap: wrap;
+    }
+
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .remember input {
+      accent-color: #2563eb;
+    }
+
+    .forgot {
+      color: #93c5fd;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .forgot:hover {
+      text-decoration: underline;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #2563eb, #1d4ed8);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(37,99,235,0.28);
+      transition: 0.25s ease;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(37,99,235,0.34);
+    }
+
+    .bottom-text {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .bottom-text a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .bottom-text a:hover {
+      text-decoration: underline;
+    }
+
+    .demo-box {
+      margin-top: 22px;
+      border: 1px solid rgba(148,163,184,0.14);
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .error-box {
+      display: none;
+      margin-top: 14px;
+      background: rgba(127,29,29,0.45);
+      border: 1px solid rgba(248,113,113,0.28);
+      color: #fecaca;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .login-wrapper {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title {
+        font-size: 32px;
+      }
+
+      .info-panel {
+        order: 2;
+      }
+
+      .login-card {
+        order: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="login-wrapper">
+    <div class="info-panel">
+      <div>
+        <div class="brand">
+          <div class="brand-badge">S</div>
+          SecureLog
+        </div>
+
+        <div class="hero-title">Cyber Threat Monitoring and Log Intelligence</div>
+        <div class="hero-subtitle">
+          Monitor suspicious login attempts, file actions, access-denied events, IP-based threat origins, and map-based location insights through a professional dark security dashboard.
+        </div>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="feature-icon">🛡️</div>
+            <div>
+              <div class="feature-title">Threat Detection</div>
+              <div class="feature-text">Detect brute force attempts, suspicious login timing, unauthorized access, and sensitive file activity.</div>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">📍</div>
+            <div>
+              <div class="feature-title">Location Intelligence</div>
+              <div class="feature-text">Track public IP location, approximate region, ISP, and launch the location directly in map view.</div>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">📊</div>
+            <div>
+              <div class="feature-title">Security Dashboard</div>
+              <div class="feature-text">Review alerts, severity, risk score, timestamps, and suspicious user activity in a full-page dark theme dashboard.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        SecureLog © 2026 • Java-Based Cyber Threat Log Analyzer
+      </div>
+    </div>
+
+    <div class="login-card">
+      <h2 class="login-title">Welcome Back</h2>
+      <div class="login-subtitle">Login to access the SecureLog monitoring dashboard</div>
+
+      <div class="input-group">
+        <label class="input-label">Username</label>
+        <div class="input-box">
+          <input type="text" id="loginUser" placeholder="Enter your username">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <div class="input-box">
+          <input type="password" id="loginPass" placeholder="Enter your password">
+          <span class="toggle-password" onclick="togglePassword('loginPass', this)">Show</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="remember">
+          <input type="checkbox" id="rememberMe">
+          Remember me
+        </label>
+        <a href="#" class="forgot" onclick="showForgotMessage()">Forgot password?</a>
+      </div>
+
+      <button class="login-btn" onclick="login()">Login</button>
+
+      <div id="errorBox" class="error-box"></div>
+
+      <div class="bottom-text">
+        Don’t have an account? <a href="/signup">Create Account</a>
+      </div>
+
+      <div class="demo-box">
+        <strong>Quick Access Tip:</strong><br>
+        Create an account from the signup page, then login to open the dashboard and upload a log file for analysis.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rememberedUser = localStorage.getItem("securelog_remember_user");
+    if (rememberedUser) {
+      document.getElementById("loginUser").value = rememberedUser;
+      document.getElementById("rememberMe").checked = true;
+    }
+
+    function togglePassword(inputId, element) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        element.textContent = "Hide";
+      } else {
+        input.type = "password";
+        element.textContent = "Show";
+      }
+    }
+
+    function showForgotMessage() {
+      alert("For this project demo, please create a new account from the signup page if needed.");
+    }
+
+    function login() {
+      const username = document.getElementById("loginUser").value.trim();
+      const password = document.getElementById("loginPass").value.trim();
+      const rememberMe = document.getElementById("rememberMe").checked;
+      const errorBox = document.getElementById("errorBox");
+
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+
+      if (!username || !password) {
+        errorBox.textContent = "Please enter both username and password.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      const users = JSON.parse(localStorage.getItem("securelog_users") || "[]");
+      const found = users.find(u => u.username === username && u.password === password);
+
+      if (found) {
+        localStorage.setItem("securelog_current_user", username);
+
+        if (rememberMe) {
+          localStorage.setItem("securelog_remember_user", username);
+        } else {
+          localStorage.removeItem("securelog_remember_user");
+        }
+
+        window.location.href = "/dashboard";
+      } else {
+        errorBox.textContent = "Invalid username or password.";
+        errorBox.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Threat Location Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+    }
+    .header {
+      background: #111827;
+      color: white;
+      padding: 16px 24px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .info {
+      width: 96%;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      font-size: 20px;
+    }
+    .info p {
+      margin: 10px 0;
+    }
+    #map {
+      width: 96%;
+      height: 600px;
+      margin: 0 auto 24px auto;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .error {
+      width: 96%;
+      margin: 20px auto;
+      background: #fff0f0;
+      color: #b00020;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Threat Location Map</div>
+
+  <div class="info">
+    <p><strong>User:</strong> <span id="user"></span></p>
+    <p><strong>IP Address:</strong> <span id="ip"></span></p>
+    <p><strong>Date:</strong> <span id="date"></span></p>
+    <p><strong>Time:</strong> <span id="time"></span></p>
+  </div>
+
+  <div id="errorBox" class="error" style="display:none;"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ip = params.get("ip") || "";
+    const user = params.get("user") || "";
+    const date = params.get("date") || "";
+    const time = params.get("time") || "";
+
+    document.getElementById("ip").textContent = ip;
+    document.getElementById("user").textContent = user;
+    document.getElementById("date").textContent = date;
+    document.getElementById("time").textContent = time;
+
+    function isPrivateIp(ip) {
+      return ip.startsWith("10.") ||
+             ip.startsWith("192.168.") ||
+             /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip) ||
+             ip === "127.0.0.1";
+    }
+
+    async function loadMap() {
+      const errorBox = document.getElementById("errorBox");
+      const mapDiv = document.getElementById("map");
+
+      if (!ip) {
+        errorBox.style.display = "block";
+        errorBox.textContent = "No IP address provided.";
+        mapDiv.style.display = "none";
+        return;
+      }
+
+      if (isPrivateIp(ip)) {
+        errorBox.style.display = "block";
+        errorBox.textContent = "This is a private/local IP address, so real map location cannot be shown.";
+        mapDiv.style.display = "none";
+        return;
+      }
+
+      const map = L.map("map").setView([20, 0], 2);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
+
+      try {
+        const res = await fetch("https://ipwho.is/" + ip);
+        const geo = await res.json();
+
+        if (geo.success && geo.latitude && geo.longitude) {
+          map.setView([geo.latitude, geo.longitude], 5);
+
+          L.marker([geo.latitude, geo.longitude])
+            .addTo(map)
+            .bindPopup(
+              `<b>User:</b> ${user}<br>
+               <b>IP:</b> ${ip}<br>
+               <b>Country:</b> ${geo.country}<br>
+               <b>City:</b> ${geo.city}<br>
+               <b>Date:</b> ${date}<br>
+               <b>Time:</b> ${time}`
+            )
+            .openPopup();
+        } else {
+          errorBox.style.display = "block";
+          errorBox.textContent = "Could not find location for this IP.";
+          mapDiv.style.display = "none";
+        }
+      } catch (e) {
+        errorBox.style.display = "block";
+        errorBox.textContent = "Failed to load map data.";
+        mapDiv.style.display = "none";
+      }
+    }
+
+    loadMap();
+  </script>
+</body>
+</html>
